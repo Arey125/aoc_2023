@@ -6,8 +6,25 @@ fn getLine(buffer: []u8) !?[]u8 {
 }
 
 pub fn main() !void {
-    const stdin = std.io.getStdIn().reader();
-    _ = stdin;
     const stdout = std.io.getStdOut().writer();
-    _ = stdout;
+
+    var result: u32 = 0;
+
+    var buffer: [1024]u8 = undefined;
+    while (try getLine(&buffer)) |line| {
+        result += for (line) |c| {
+            if (std.ascii.isDigit(c))
+                break (c - '0') * 10;
+        } else 0;
+
+        var second_digit: ?u32 = null;
+        for (line) |c| {
+            if (std.ascii.isDigit(c))
+                second_digit = c - '0';
+        }
+
+        result += second_digit orelse 0;
+    }
+
+    try stdout.print("{}\n", .{result});
 }
