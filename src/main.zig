@@ -6,32 +6,45 @@ fn getLine(buffer: []u8) !?[]u8 {
     return try stdin.readUntilDelimiterOrEof(buffer, '\n');
 }
 
-fn isSetPossible(line: []const u8) bool {
+const Set = struct {
+    red: u32,
+    green: u32,
+    blue: u32,
+};
+
+fn parseSet(line: []const u8) Set {
+    var result = Set{ .red = 0, .green = 0, .blue = 0 };
+
     var item_iterator = std.mem.split(u8, line, ", ");
     while (item_iterator.next()) |item_string| {
         const space_pos = std.mem.indexOf(u8, item_string, " ") orelse continue;
         const value = std.fmt.parseInt(u8, item_string[0..space_pos], 10) catch 0;
         const name = item_string[space_pos + 1 ..];
 
-        if (std.mem.eql(u8, name, "red") and value > 12)
-            return false;
-        if (std.mem.eql(u8, name, "green") and value > 13)
-            return false;
-        if (std.mem.eql(u8, name, "blue") and value > 14)
-            return false;
+        if (std.mem.eql(u8, name, "red"))
+            result.red = value;
+        if (std.mem.eql(u8, name, "green"))
+            result.green = value;
+        if (std.mem.eql(u8, name, "blue"))
+            result.blue = value;
     }
-    return true;
+    return result;
 }
 
-fn isGamePossible(game_line: []const u8) bool {
+fn gameResult(game_line: []const u8) u32 {
     const game_data_start = std.mem.indexOf(u8, game_line, ": ").? + 2;
     var set_iterator = std.mem.split(u8, game_line[game_data_start..], "; ");
 
+    var result = Set{ .red = 0, .green = 0, .blue = 0 };
+
     while (set_iterator.next()) |set_line| {
-        if (!isSetPossible(set_line))
-            return false;
+        const set = parseSet(set_line);
+
+        result.red = @max(result.red, set.red);
+        result.green = @max(result.green, set.green);
+        result.blue = @max(result.blue, set.blue);
     }
-    return true;
+    return result.red * result.green * result.blue;
 }
 
 pub fn main() !void {
@@ -42,19 +55,17 @@ pub fn main() !void {
     var buffer: [4096]u8 = undefined;
     var i: u32 = 1;
     while (try getLine(&buffer)) |line| : (i += 1) {
-        if (isGamePossible(line))
-            result += i;
+        result += gameResult(line);
     }
 
     try stdout.print("{}\n", .{result});
 }
 
-test "is set possible" {
-    try expect(isSetPossible("3 blue, 4 red"));
-    try expect(!isSetPossible("8 green, 6 blue, 20 red"));
+test "parse set" {
+    const set = parseSet("3 blue, 4 red");
+    try expect(set.red == 4 and set.green == 0 and set.blue == 3);
 }
 
-test "is game possible" {
-    try expect(isGamePossible("Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green"));
-    try expect(!isGamePossible("Game 3: 8 green, 6 blue, 20 red; 5 blue, 4 red, 13 green; 5 green, 1 red"));
+test "game result" {
+    try expect(gameResult("Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green") == 48);
 }
