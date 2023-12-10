@@ -8,21 +8,21 @@ fn getLine(buffer: []u8) !?[]u8 {
     return try stdin.readUntilDelimiterOrEof(buffer, '\n');
 }
 
-fn getNumbers(line: []const u8) !std.ArrayList(i32) {
+fn getNumber(line: []const u8) !u64 {
     const colonPos = std.mem.indexOf(u8, line, ":") orelse 0;
     const numberLine = line[colonPos + 1 ..];
     var numberIterator = std.mem.tokenizeAny(u8, numberLine, " ");
-    var result = std.ArrayList(i32).init(allocator);
+    var result = std.ArrayList(u8).init(allocator);
 
     while (numberIterator.next()) |token| {
-        try result.append(try std.fmt.parseInt(i32, token, 10));
+        try result.appendSlice(token);
     }
 
-    return result;
+    return std.fmt.parseInt(u64, result.items, 10);
 }
 
-fn solve(time: u32, distance: u32) u32 {
-    var result: u32 = 0;
+fn solve(time: u64, distance: u64) u64 {
+    var result: u64 = 0;
     for (0..time + 1) |hold| {
         const current_distance = (time - hold) * hold;
         if (current_distance > distance) {
@@ -38,17 +38,10 @@ pub fn main() !void {
     const timeLine = try getLine(&timeBuffer) orelse "";
     const distanceLine = try getLine(&distanceBuffer) orelse "";
 
-    const times = try getNumbers(timeLine);
-    const distances = try getNumbers(distanceLine);
-    const n = times.items.len;
+    const times = try getNumber(timeLine);
+    const distances = try getNumber(distanceLine);
 
-    var result: u32 = 1;
-    for (0..n) |i| {
-        const time = times.items[i];
-        const distance = distances.items[i];
-
-        result *= solve(@intCast(time), @intCast(distance));
-    }
+    const result = solve(times, distances);
 
     try stdout.print("{}\n", .{result});
 }
