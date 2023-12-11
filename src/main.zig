@@ -40,7 +40,13 @@ fn handType(hand: Hand) u32 {
     std.mem.sort(u8, &handStr, {}, std.sort.asc(u8));
 
     var cards = std.ArrayList(Card).init(gpa);
+    var jokers: u32 = 0;
     for (handStr) |card| {
+        if (card == 'J') {
+            jokers += 1;
+            continue;
+        }
+
         if (cards.items.len == 0) {
             cards.append(Card{ .value = card, .count = 1 }) catch unreachable;
             continue;
@@ -56,7 +62,10 @@ fn handType(hand: Hand) u32 {
 
     std.mem.sort(Card, cards.items, {}, cardComparator);
 
-    const firstCardCount = cards.items[0].count;
+    const firstCardCount = if (cards.items.len > 0)
+        cards.items[0].count + jokers
+    else
+        jokers;
 
     if (firstCardCount == 5)
         return 6;
@@ -83,6 +92,7 @@ fn handType(hand: Hand) u32 {
 
 fn getCardValue(card: u8) u8 {
     return switch (card) {
+        'J' => 1 + '0',
         '2' => 2 + '0',
         '3' => 3 + '0',
         '4' => 4 + '0',
@@ -92,7 +102,6 @@ fn getCardValue(card: u8) u8 {
         '8' => 8 + '0',
         '9' => 9 + '0',
         'T' => 10 + '0',
-        'J' => 11 + '0',
         'Q' => 12 + '0',
         'K' => 13 + '0',
         'A' => 14 + '0',
