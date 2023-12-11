@@ -81,13 +81,40 @@ fn handType(hand: Hand) u32 {
     return 1;
 }
 
+fn getCardValue(card: u8) u8 {
+    return switch (card) {
+        '2' => 2 + '0',
+        '3' => 3 + '0',
+        '4' => 4 + '0',
+        '5' => 5 + '0',
+        '6' => 6 + '0',
+        '7' => 7 + '0',
+        '8' => 8 + '0',
+        '9' => 9 + '0',
+        'T' => 10 + '0',
+        'J' => 11 + '0',
+        'Q' => 12 + '0',
+        'K' => 13 + '0',
+        'A' => 14 + '0',
+        else => unreachable,
+    };
+}
+
 fn handComparator(_: void, a: Hand, b: Hand) bool {
     const a_type = handType(a);
     const b_type = handType(b);
     if (a_type != b_type)
         return a_type < b_type;
 
-    return std.mem.order(u8, a.hand, b.hand).compare(std.math.CompareOperator.gte);
+    var aStr: [5]u8 = undefined;
+    var bStr: [5]u8 = undefined;
+
+    for (0..5) |i| {
+        aStr[i] = getCardValue(a.hand[i]);
+        bStr[i] = getCardValue(b.hand[i]);
+    }
+
+    return std.mem.order(u8, &aStr, &bStr).compare(std.math.CompareOperator.lte);
 }
 
 pub fn main() !void {
