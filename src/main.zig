@@ -28,7 +28,7 @@ fn parseNode(line: []const u8) !Node {
 
     const commaPos = std.mem.indexOf(u8, line, ",") orelse return ParsingError.CharNotFound;
     const left = nodeNameToValue(line[equalSignPos + 4 .. commaPos]);
-    const right = nodeNameToValue(line[commaPos + 2 .. commaPos + 6]);
+    const right = nodeNameToValue(line[commaPos + 2 .. commaPos + 5]);
 
     return Node{ .value = node_value, .left = left, .right = right };
 }
@@ -45,6 +45,6 @@ pub fn main() !void {
     _ = try getLine(&node_buffer);
     while (try getLine(&node_buffer)) |line| {
         const node = try parseNode(line);
-        std.debug.print("{}\n", .{node});
+        std.debug.print("{x} {x} {x}\n", .{ node.value, node.left, node.right });
     }
 }
