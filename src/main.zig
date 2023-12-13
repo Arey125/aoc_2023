@@ -1,7 +1,8 @@
 const std = @import("std");
 
-const ParsingError = error{
+const AppError = error{
     CharNotFound,
+    NoCommands,
 };
 
 fn getLine(buffer: []u8) !?[]u8 {
@@ -23,10 +24,10 @@ fn nodeNameToValue(name: []const u8) u32 {
 }
 
 fn parseNode(line: []const u8) !Node {
-    const equalSignPos = std.mem.indexOf(u8, line, " = ") orelse return ParsingError.CharNotFound;
+    const equalSignPos = std.mem.indexOf(u8, line, " = ") orelse return AppError.CharNotFound;
     const node_value = nodeNameToValue(line[0..equalSignPos]);
 
-    const commaPos = std.mem.indexOf(u8, line, ",") orelse return ParsingError.CharNotFound;
+    const commaPos = std.mem.indexOf(u8, line, ",") orelse return AppError.CharNotFound;
     const left = nodeNameToValue(line[equalSignPos + 4 .. commaPos]);
     const right = nodeNameToValue(line[commaPos + 2 .. commaPos + 5]);
 
@@ -35,16 +36,29 @@ fn parseNode(line: []const u8) !Node {
 
 pub fn main() !void {
     const stdout = std.io.getStdOut().writer();
-    _ = stdout;
+
+    var nodes: [26 * 26 * 26]Node = undefined;
 
     var command_buffer: [1024]u8 = undefined;
-    const commands = try getLine(&command_buffer);
-    _ = commands;
+    const commands = try getLine(&command_buffer) orelse return AppError.NoCommands;
 
     var node_buffer: [256]u8 = undefined;
     _ = try getLine(&node_buffer);
     while (try getLine(&node_buffer)) |line| {
         const node = try parseNode(line);
-        std.debug.print("{x} {x} {x}\n", .{ node.value, node.left, node.right });
+        nodes[node.value] = node;
     }
+
+    var step: u32 = 0;
+    var currentNode: u32 = 0;
+    while (currentNode != 26 * 26 * 26 - 1) {
+        currentNode = if (commands[step % commands.len] == 'L')
+            nodes[currentNode].left
+        else
+            nodes[currentNode].right;
+
+        step += 1;
+    }
+
+    try stdout.print("{}\n", .{step});
 }
