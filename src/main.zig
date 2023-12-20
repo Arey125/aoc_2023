@@ -19,7 +19,7 @@ fn getValues(line: []const u8) !std.ArrayList(i64) {
     return res;
 }
 
-fn getNext(values: []const i64) !i64 {
+fn getPrev(values: []const i64) !i64 {
     if (std.mem.count(i64, values, &[_]i64{0}) == values.len) {
         return 0;
     }
@@ -27,7 +27,7 @@ fn getNext(values: []const i64) !i64 {
     for (diffs, 0..) |*diff, i| {
         diff.* = values[i + 1] - values[i];
     }
-    return try getNext(diffs) + values[values.len - 1];
+    return values[0] - try getPrev(diffs);
 }
 
 pub fn main() !void {
@@ -40,7 +40,7 @@ pub fn main() !void {
         var values = try getValues(line);
         defer values.deinit();
 
-        res += try getNext(values.items);
+        res += try getPrev(values.items);
     }
 
     try stdout.print("{}\n", .{res});
@@ -53,11 +53,11 @@ test "get values" {
 
 test "get next" {
     const values1 = [_]i64{ 0, 0, 0 };
-    try expect(try getNext(&values1) == 0);
+    try expect(try getPrev(&values1) == 0);
 
     const values2 = [_]i64{ 1, 1, 1 };
-    try expect(try getNext(&values2) == 1);
+    try expect(try getPrev(&values2) == 1);
 
     const values3 = [_]i64{ 0, 3, 6, 9, 12, 15 };
-    try expect(try getNext(&values3) == 18);
+    try expect(try getPrev(&values3) == 18);
 }
